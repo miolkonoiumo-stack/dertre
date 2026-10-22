@@ -21,6 +21,24 @@ import { tileCenter, safeGroups, worldToTile, idx } from '@shared/sim.js';
 
 const SETTINGS_KEY = 'tfil_settings';
 
+/**
+ * Pick a stable character head for a player id.
+ *
+ * Colours already differ per player, but deriving the headgear from the colour
+ * gave every bot in a match the same silhouette. Hashing the id instead means
+ * each player gets their own little character, and it stays the same for the
+ * whole match (and every rematch with the same room).
+ */
+function _headVariantFor(id) {
+  const s = String(id ?? '');
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) % 8;
+}
+
 export class GameApp {
   constructor(canvas) {
     this.canvas = canvas;
@@ -617,7 +635,7 @@ export class GameApp {
   _ensureAvatar(id, name, color) {
     let av = this.avatars.get(id);
     if (av) return av;
-    av = new Avatar(color ?? 0);
+    av = new Avatar(color ?? 0, _headVariantFor(id));
     av.colorIndex = color ?? 0;
     av.setName(name || '');
     const pos = this._spawnFor(id);

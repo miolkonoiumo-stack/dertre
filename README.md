@@ -24,6 +24,8 @@ Juego 3D de supervivencia en arena, construido con **Three.js** y un **servidor 
 - **Bots con 5 niveles de dificultad**, ajustables desde el menú. Los bots solo usan información que también tiene un humano (posiciones y velocidades visibles).
 - **Lobby con código de sala** de 5 caracteres.
 - **Arena 3D** con Three.js: iluminación, explosiones, efectos de partículas, animación de caída.
+- **Personajes con carácter propio:** cada jugador recibe una combinación única de color y tocado de cabeza (antenas, cuernos, gorra, gafas, orejas, aleta, aro, corona). Cabeza grande, cuerpo pequeño, extremidades cortas, contorno negro grueso, ojos que siguen la dirección de la carrera y parpadean, y squash & stretch al saltar y aterrizar. Todo procedural, sin ficheros de modelo.
+- **Escenario de concurso:** el plató es un decorado de *game show* — plataforma de tiles biselados con tapa luminosa, marco de acero con barandilla de neón, torres de luz en las esquinas, gradas con público y un horizonte de crepúsculo con crestas volcánicas.
 - **Audio sintetizado** (sin ficheros externos).
 - **HUD en español:** ronda, tiempo, jugadores vivos, dificultad.
 

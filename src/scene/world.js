@@ -31,7 +31,9 @@ export class World {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x140709, 0.018);
+    // Warm haze, much lighter than the old 0x140709 dungeon fog. A bright scene
+    // is what makes toy characters read as friendly instead of menacing.
+    this.scene.fog = new THREE.FogExp2(0x2a1a24, 0.0085);
 
     this.camera = new THREE.PerspectiveCamera(58, 1, 0.1, 400);
     this.camera.position.set(0, 14, 20);
@@ -57,10 +59,10 @@ export class World {
     // 0.55: it washed every surface in orange, so the GREEN safe tiles rendered
     // as r=1 g=0.36 b=0.02 (orange) and the player literally could not see where
     // it was safe. Ambient must stay neutral; colour belongs to the tiles.
-    const hemi = new THREE.HemisphereLight(0x9fc4ff, 0x4a4440, 0.62);
+    const hemi = new THREE.HemisphereLight(0xbcd8ff, 0x6b5a52, 0.95);
     this.scene.add(hemi);
 
-    const key = new THREE.DirectionalLight(0xfff6ec, 1.35);
+    const key = new THREE.DirectionalLight(0xfffaf0, 1.85);
     key.position.set(12, 26, 10);
     key.castShadow = this.renderer.shadowMap.enabled;
     if (key.castShadow) {
@@ -71,9 +73,17 @@ export class World {
       key.shadow.mapSize.set(this.quality === 'high' ? 2048 : 1024, this.quality === 'high' ? 2048 : 1024);
       key.shadow.bias = -0.0008;
       key.shadow.normalBias = 0.03;
+      key.shadow.radius = 3;
     }
     this.scene.add(key);
     this.key = key;
+
+    // Cool fill from the opposite side: kills the "flat lit sprite" look and
+    // gives the toy bodies a readable rim.
+    const fill = new THREE.DirectionalLight(0x8fc6ff, 0.55);
+    fill.position.set(-14, 10, -12);
+    this.scene.add(fill);
+    this.fill = fill;
 
     // Lava bounce light, kept WEAK and BELOW the deck. At intensity 22 it dyed
     // the top surface of every tile orange and destroyed the green/red contrast
