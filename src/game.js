@@ -65,6 +65,19 @@ export class GameApp {
   }
 
   // â”€â”€ Boot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /**
+   * Empuja progreso al loader de index.html. Es tolerante a fallos a propósito:
+   * si el loader ya se cerró (o no existe, como en las pruebas headless), el
+   * arranque del juego no debe romperse por eso.
+   */
+  _bootStep(frac, text) {
+    try {
+      window.__boot?.set(frac, text);
+    } catch {
+      /* el loader es cosmético: nunca debe bloquear el arranque */
+    }
+  }
+
   async boot() {
     const ui = (this.ui = new UI({ onAction: (a, v) => this.onAction(a, v) }));
     const audio = (this.audio = new AudioEngine());
@@ -72,7 +85,7 @@ export class GameApp {
     audio.setVolume('music', this.settings.music);
     audio.setVolume('sfx', this.settings.sfx);
 
-    ui.loaderProgress(0.12, 'Creando motor 3Dâ€¦');
+    this._bootStep(0.12, 'Creando el motor 3D…');
     const world = (this.world = new World(this.canvas, {
       quality: this.settings.quality,
       bloom: this.settings.bloom,
@@ -83,11 +96,11 @@ export class GameApp {
       invertY: this.settings.invertY,
     }));
 
-    ui.loaderProgress(0.38, 'Construyendo arenaâ€¦');
+    this._bootStep(0.42, 'Construyendo la arena…');
     const arena = (this.arena = new Arena(world.scene, { quality: this.settings.quality }));
     arena.setSafe(this.safe);
 
-    ui.loaderProgress(0.62, 'PartÃ­culas y efectosâ€¦');
+    this._bootStep(0.62, 'Preparando las partículas…');
     const fx = (this.fx = new Effects(world.scene, { particles: this.settings.particles }));
     fx.shakeFn = (a) => rig.kick(a);
 
@@ -105,7 +118,7 @@ export class GameApp {
     this._applySettingsToUI();
     this._drawSkinPreview();
 
-    ui.loaderProgress(0.84, 'Conectando servidorâ€¦');
+    this._bootStep(0.84, 'Conectando con el servidor…');
     this.net = new NetClient({
       onEvent: (e) => this.onNetEvent(e),
       onState: (s) => this.onNetState(s),
@@ -118,7 +131,7 @@ export class GameApp {
     this.running = true;
     this._raf = requestAnimationFrame((t) => this._frame(t));
 
-    ui.loaderProgress(1, 'Listo');
+    this._bootStep(1, '¡Listo!');
     // Unconditional: by this point boot has fully succeeded, so showing the menu
     // is always correct. Never gate this on `ui.current`, which used to be null
     // and left players stuck on the loading screen forever.

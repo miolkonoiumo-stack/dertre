@@ -1,4 +1,4 @@
-# 🌋 THE FLOOR IS LAVA
+# 🌋 EL PISO ES LAVA
 
 Juego 3D de supervivencia en arena, construido con **Three.js** y un **servidor autoritativo en Node.js + Socket.IO**. El piso empieza neutro: aparecen las zonas seguras y corre un contador de 5 segundos. Quien no llegue a una zona, explota.
 
@@ -28,6 +28,8 @@ Juego 3D de supervivencia en arena, construido con **Three.js** y un **servidor 
 - **Escenario de concurso:** el plató es un decorado de *game show* — plataforma de tiles biselados con tapa luminosa, marco de acero con barandilla de neón, torres de luz en las esquinas, gradas con público y un horizonte de crepúsculo con crestas volcánicas.
 - **Audio sintetizado** (sin ficheros externos).
 - **HUD en español:** ronda, tiempo, jugadores vivos, dificultad.
+- **Toda la interfaz en español**, incluido el título.
+- **Pantalla de carga propia:** el loader va *inline* en `index.html`, así que se pinta en el primer frame, con su barra de progreso real. La interfaz no se muestra hasta que el CSS está aplicado, lo que elimina el destello de menú sin estilos mientras carga Three.js.
 
 ## Cómo correrlo
 

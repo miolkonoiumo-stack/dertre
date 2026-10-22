@@ -10,15 +10,15 @@ const $$ = (sel) => [...document.querySelectorAll(sel)];
 export class UI {
   constructor({ onAction } = {}) {
     this.onAction = onAction || (() => {});
-    this.screens = ['loader', 'menu', 'rooms', 'lobby', 'settings', 'howto', 'results', 'pause'];
+    this.screens = ['menu', 'rooms', 'lobby', 'settings', 'howto', 'results', 'pause'];
     this.current = null;
     this.selectedColor = Number(localStorage.getItem('tfil_color') || 0);
     this.msgTimer = null;
     this._bind();
     this._buildSwatches();
-    // Sync with whatever screen the markup already has marked active. The
-    // loader ships with class="active" in the HTML, so `current` must start as
-    // 'loader' or any later `if (current === 'loader')` check silently fails.
+    // Se sincroniza con la pantalla que el HTML ya marque como activa, si hay.
+    // La pantalla de carga (#boot) vive en index.html y se retira sola, así
+    // que no forma parte de esta lista.
     this.current = this.screens.find((s) => document.getElementById(s)?.classList.contains('active')) || null;
   }
 
@@ -251,12 +251,6 @@ export class UI {
     el.hidden = false;
     clearTimeout(this._toastT);
     this._toastT = setTimeout(() => { el.hidden = true; }, ms);
-  }
-
-  loaderProgress(frac, text) {
-    const fill = $('#loader-fill');
-    if (fill) fill.style.width = `${Math.round(frac * 100)}%`;
-    if (text) $('#loader-text').textContent = text;
   }
 }
 

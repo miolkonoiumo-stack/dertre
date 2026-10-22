@@ -3,50 +3,257 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#0a0506" />
-  <meta name="description" content="THE FLOOR IS LAVA — arena 3D de supervivencia. Cada 5 segundos el suelo cambia." />
-  <title>THE FLOOR IS LAVA — 3D Arena</title>
+  <meta name="theme-color" content="#1a0a1c" />
+  <meta name="description" content="El Piso Es Lava — arena 3D de supervivencia. Cada 5 segundos el suelo decide quién sigue en pie." />
+  <title>El Piso Es Lava — Arena 3D</title>
+
+  <!--
+    ── LOADER INLINE ────────────────────────────────────────────────────────
+    Estos estilos van EN LÍNEA, no en main.css, a propósito.
+
+    El <body> se pinta en cuanto llega el HTML, pero main.css y el bundle de
+    JS (Three.js, ~550 kB) llegan después. Sin esto el navegador enseñaba el
+    menú desnudo — texto sin estilos — durante ese hueco. Al estar en línea,
+    el loader se pinta en el primer frame, tapando todo hasta que el juego
+    está listo.
+
+    También se cargan las fuentes aquí, en el <head>, para que no haya un
+    segundo salto visual cuando llegan.
+  -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Base mínima, presente antes de que llegue main.css ─────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; height: 100%; overflow: hidden;
+      background: #0a0510; color: #fff;
+      font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /*
+     * Todo lo que no sea el loader está oculto hasta que el CSS del juego
+     * carga y añade `html.ready`. Así el menú nunca se ve «en crudo».
+     */
+    html:not(.ready) #app { display: none !important; }
+    /* El loader es hermano de #app, así que sigue viéndose cuando #app
+       está oculto. Ese es justo el punto. */
+
+    #boot {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; overflow: hidden;
+      background: radial-gradient(120% 100% at 50% 0%, #3a1030 0%, #1a0a1c 48%, #0a0510 100%);
+      transition: opacity 420ms ease, visibility 420ms;
+    }
+    #boot.is-done { opacity: 0; visibility: hidden; pointer-events: none; }
+
+    /* Manchas de color difuminadas: profundidad sin usar imágenes. */
+    #boot::before, #boot::after {
+      content: ''; position: absolute; border-radius: 50%;
+      filter: blur(70px); opacity: .5; pointer-events: none;
+    }
+    #boot::before { width: 46vmax; height: 46vmax; left: -12vmax; top: -14vmax; background: #ff5aa0; }
+    #boot::after  { width: 40vmax; height: 40vmax; right: -10vmax; bottom: -12vmax; background: #ff9a2e; }
+
+    .boot-card {
+      position: relative; z-index: 1; width: min(440px, 92vw);
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
+      text-align: center;
+    }
+
+    .boot-logo { display: flex; flex-direction: column; line-height: .86; }
+    .boot-l1 {
+      font-family: 'Baloo 2', system-ui, sans-serif; font-weight: 800;
+      font-size: clamp(34px, 11vw, 60px); letter-spacing: -1px; text-transform: uppercase;
+      color: #fff;
+      text-shadow: 0 4px 0 #b8235a, 0 8px 0 rgba(0,0,0,.3), 0 12px 30px rgba(255,90,160,.55);
+    }
+    .boot-l2 {
+      font-family: 'Baloo 2', system-ui, sans-serif; font-weight: 800;
+      font-size: clamp(30px, 9.6vw, 52px); letter-spacing: 5px; text-transform: uppercase;
+      color: #ffd93b;
+      text-shadow: 0 4px 0 #c4620a, 0 8px 0 rgba(0,0,0,.3), 0 12px 30px rgba(255,154,46,.6);
+    }
+
+    .boot-bubble { height: 52px; display: flex; align-items: flex-end; }
+    .boot-drop {
+      width: 34px; height: 42px; display: block;
+      background: linear-gradient(180deg, #ffe066, #ff7a18 62%, #ff3d5e);
+      border-radius: 52% 52% 46% 46% / 62% 62% 40% 40%;
+      box-shadow: 0 0 26px rgba(255,122,24,.85), 0 0 60px rgba(255,61,94,.45);
+      animation: bootBounce 900ms cubic-bezier(.5,.05,.5,.95) infinite;
+    }
+    @keyframes bootBounce {
+      0%, 100% { transform: translateY(0) scale(1, 1); }
+      42%      { transform: translateY(-26px) scale(.92, 1.08); }
+      78%      { transform: translateY(0) scale(1.1, .9); }
+    }
+
+    .boot-track {
+      width: 100%; height: 18px; border-radius: 999px;
+      background: rgba(0,0,0,.42);
+      border: 2px solid rgba(255,255,255,.16);
+      box-shadow: inset 0 3px 8px rgba(0,0,0,.5);
+      overflow: hidden;
+    }
+    .boot-fill {
+      display: block; height: 100%; width: 0%; border-radius: 999px;
+      background-color: #ff9a2e;
+      background-image:
+        linear-gradient(90deg, #ffd93b, #ff9a2e 45%, #ff3d5e),
+        repeating-linear-gradient(115deg, rgba(255,255,255,.25) 0 10px, transparent 10px 20px);
+      background-blend-mode: overlay;
+      background-size: 100% 100%, 40px 40px;
+      box-shadow: 0 0 18px rgba(255,154,46,.9);
+      transition: width 260ms cubic-bezier(.3,.9,.3,1);
+      animation: bootStripes 900ms linear infinite;
+    }
+    @keyframes bootStripes { to { background-position: 0 0, 40px 0; } }
+
+    .boot-row {
+      width: 100%; display: flex; justify-content: space-between; align-items: baseline;
+      font-size: 13px; font-weight: 700; letter-spacing: .6px;
+      color: rgba(255,255,255,.62);
+    }
+    .boot-pct { font-variant-numeric: tabular-nums; color: #ffd93b; font-size: 15px; }
+    #boot-step { text-align: left; }
+    .boot-tip {
+      min-height: 2.6em; font-size: 12.5px; line-height: 1.35;
+      color: rgba(255,255,255,.42); max-width: 34ch;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .boot-drop, .boot-fill { animation: none; }
+    }
+  </style>
+
+  <script>
+    /*
+     * Arranca la barra ANTES de que exista ningún módulo. Crece hacia el 90%
+     * por si el bundle tarda; el 100% lo pone el juego cuando está listo.
+     */
+    window.__boot = (function () {
+      var el = null, fill = null, pct = null, step = null, tip = null;
+      var value = 0.05, target = 0.05, finished = false, timer = null;
+
+      var TIPS = [
+        'Cada ronda hay una zona segura menos que jugadores vivos.',
+        'Solo cabe un jugador por zona: corre antes de que se llenen.',
+        'Si el contador llega a cero y no estás en verde, explotas.',
+        'Salta para cruzar los huecos: el borde no perdona.',
+        'Las zonas cambian de sitio cada ronda. Mira el suelo, no al rival.',
+        'Gana el último que quede de pie.'
+      ];
+
+      function paint() {
+        var p = Math.round(value * 100);
+        if (fill) fill.style.width = p + '%';
+        if (pct) pct.textContent = p + '%';
+      }
+
+      function init() {
+        el = document.getElementById('boot');
+        fill = document.getElementById('boot-fill');
+        pct = document.getElementById('boot-pct');
+        step = document.getElementById('boot-step');
+        tip = document.getElementById('boot-tip');
+        if (tip) tip.textContent = TIPS[(Math.random() * TIPS.length) | 0];
+        paint();
+        timer = setInterval(function () {
+          if (finished) return;
+          if (target < 0.9) target = Math.min(0.9, target + 0.014);
+          value += (target - value) * 0.12;
+          paint();
+        }, 120);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+
+      return {
+        set: function (frac, text) {
+          if (finished) return;
+          if (typeof frac === 'number') target = Math.max(target, Math.min(0.98, frac));
+          if (text && step) step.textContent = text;
+        },
+        done: function () {
+          if (finished || !el) return;
+          finished = true;
+          clearInterval(timer);
+          value = 1; paint();
+          if (step) step.textContent = '¡Listo!';
+          setTimeout(function () {
+            el.classList.add('is-done');
+            // pointer-events ya está a none por .is-done; esto además libera
+            // el nodo para que no quede una capa invisible en el DOM.
+            setTimeout(function () {
+              if (el && el.parentNode) el.parentNode.removeChild(el);
+            }, 480);
+          }, 240);
+        },
+        fail: function (msg) {
+          finished = true;
+          clearInterval(timer);
+          if (step) { step.textContent = msg; step.style.color = '#ff6a7a'; }
+          if (fill) fill.style.background = 'linear-gradient(90deg,#ff3d5e,#ff7a18)';
+        }
+      };
+    })();
+  </script>
 </head>
 <body>
+    <!-- Loader: estilos en línea, así que se pinta en el primer frame. -->
+    <div id="boot" role="status" aria-live="polite" aria-label="Cargando el juego">
+      <div class="boot-card">
+        <div class="boot-logo">
+          <span class="boot-l1">El Piso</span>
+          <span class="boot-l2">Es Lava</span>
+        </div>
+        <div class="boot-bubble" aria-hidden="true"><i class="boot-drop"></i></div>
+        <div class="boot-track"><i class="boot-fill" id="boot-fill"></i></div>
+        <div class="boot-row">
+          <span id="boot-step">Encendiendo el plató…</span>
+          <span class="boot-pct" id="boot-pct">0%</span>
+        </div>
+        <div class="boot-tip" id="boot-tip"></div>
+      </div>
+    </div>
   <div id="app">
     <canvas id="scene"></canvas>
 
-    <div id="loader" class="screen active">
-      <div class="loader-box">
-        <div class="loader-logo">THE FLOOR<span>IS LAVA</span></div>
-        <div class="loader-bar"><i id="loader-fill"></i></div>
-        <div class="loader-text" id="loader-text">Calentando la arena…</div>
-      </div>
-    </div>
 
     <div id="menu" class="screen">
       <header class="brand">
-        <h1>THE FLOOR<span>IS LAVA</span></h1>
-        <p class="tagline">Cada 5 segundos el suelo decide quién vive.</p>
+        <h1>EL PISO<span>ES LAVA</span></h1>
+        <p class="tagline">Cada 5 segundos el suelo decide quién sigue en pie</p>
       </header>
 
       <main class="menu-grid">
         <section class="panel panel-main">
           <button id="btn-campaign" class="btn btn-xl">
             <span class="btn-icon">▶</span>
-            <span><b>JUGAR</b><small>Contra la IA</small></span>
+            <span><b>JUGAR</b><small>Contra la máquina</small></span>
           </button>
 
           <div class="row">
-            <button id="btn-quick" class="btn btn-lg">MULTIJUGADOR<small>Partida rápida pública</small></button>
+            <button id="btn-quick" class="btn btn-lg">MULTIJUGADOR<small>Partida rápida</small></button>
             <button id="btn-rooms" class="btn btn-lg">SALAS<small>Crear o unirse</small></button>
           </div>
 
           <div class="settings-inline">
             <label class="field">
               <span>Tu nombre</span>
-              <input id="player-name" maxlength="14" placeholder="PILOT" autocomplete="nickname" />
+              <input id="player-name" maxlength="14" placeholder="JUGADOR" autocomplete="nickname" />
             </label>
             <div class="field field-grow">
-              <span>Dificultad IA</span>
+              <span>Dificultad de los rivales</span>
               <div id="difficulty-picker" class="diff-picker" role="radiogroup" aria-label="Dificultad de la IA">
                 <button type="button" class="diff-opt" data-diff="tutorial" role="radio" aria-checked="false">Tutorial</button>
                 <button type="button" class="diff-opt" data-diff="beginner" role="radio" aria-checked="false">Principiante</button>
@@ -63,7 +270,7 @@
               </select>
             </div>
             <label class="field">
-              <span>Rivales IA</span>
+              <span>Rivales</span>
               <input id="bot-count" type="range" min="1" max="7" value="5" />
               <output id="bot-count-out">5</output>
             </label>
@@ -76,7 +283,7 @@
         </section>
 
         <aside class="panel panel-side">
-          <h3>PERSONAJE</h3>
+          <h3>TU PERSONAJE</h3>
           <div class="skin-preview"><canvas id="skin-canvas" width="220" height="220"></canvas></div>
           <div id="color-picker" class="swatches"></div>
           <div class="server-status">
@@ -95,11 +302,11 @@
       <div class="menu-grid">
         <section class="panel">
           <h3>CREAR SALA</h3>
-          <label class="field"><span>Nombre</span><input id="room-name" maxlength="24" placeholder="Arena privada" /></label>
-          <label class="check"><input id="room-private" type="checkbox" /> Sala privada (solo por código)</label>
-          <button id="btn-create" class="btn btn-lg">CREAR</button>
+          <label class="field"><span>Nombre</span><input id="room-name" maxlength="24" placeholder="Mi arena" /></label>
+          <label class="check"><input id="room-private" type="checkbox" /> Sala privada (solo con código)</label>
+          <button id="btn-create" class="btn btn-lg">CREAR SALA</button>
           <hr />
-          <h3>UNIRSE POR CÓDIGO</h3>
+          <h3>UNIRSE CON CÓDIGO</h3>
           <div class="row">
             <input id="join-code" class="code-input" maxlength="5" placeholder="ABC12" autocapitalize="characters" />
             <button id="btn-join" class="btn">ENTRAR</button>
@@ -127,10 +334,10 @@
           <p class="hint" id="lobby-hint">Comparte el código para que entren tus amigos.</p>
         </section>
         <section class="panel">
-          <h3>CHAT</h3>
+          <h3>CHARLA</h3>
           <div id="chat-log" class="chat-log"></div>
           <form id="chat-form" class="row">
-            <input id="chat-input" maxlength="140" placeholder="Mensaje…" />
+            <input id="chat-input" maxlength="140" placeholder="Escribe un mensaje…" />
             <button class="btn" type="submit">➤</button>
           </form>
         </section>
@@ -142,14 +349,14 @@
       <section class="panel panel-narrow">
         <label class="field"><span>Volumen general</span><input id="vol-master" type="range" min="0" max="100" value="80" /></label>
         <label class="field"><span>Música</span><input id="vol-music" type="range" min="0" max="100" value="55" /></label>
-        <label class="field"><span>Efectos</span><input id="vol-sfx" type="range" min="0" max="100" value="85" /></label>
+        <label class="field"><span>Efectos de sonido</span><input id="vol-sfx" type="range" min="0" max="100" value="85" /></label>
         <label class="field"><span>Calidad gráfica</span>
           <select id="quality"><option value="low">Baja</option><option value="medium">Media</option><option value="high" selected>Alta</option></select>
         </label>
-        <label class="check"><input id="opt-bloom" type="checkbox" checked /> Bloom / postprocesado</label>
+        <label class="check"><input id="opt-bloom" type="checkbox" checked /> Resplandor de la lava</label>
         <label class="check"><input id="opt-shadows" type="checkbox" checked /> Sombras</label>
-        <label class="check"><input id="opt-particles" type="checkbox" checked /> Partículas volumétricas</label>
-        <label class="check"><input id="opt-invert" type="checkbox" /> Invertir cámara Y</label>
+        <label class="check"><input id="opt-particles" type="checkbox" checked /> Partículas</label>
+        <label class="check"><input id="opt-invert" type="checkbox" /> Invertir cámara en vertical</label>
         <label class="field"><span>Sensibilidad de cámara</span><input id="cam-sens" type="range" min="20" max="200" value="90" /></label>
       </section>
     </div>
@@ -158,16 +365,16 @@
       <header class="subhead"><button class="btn btn-ghost back" data-back>← VOLVER</button><h2>CÓMO JUGAR</h2></header>
       <section class="panel panel-narrow howto">
         <ol>
-          <li><b>Corre por las plataformas verdes.</b> El resto es lava.</li>
-          <li><b>Cada 5 segundos</b> el suelo cambia: aparecen nuevas zonas seguras.</li>
-          <li>Si al cambiar el suelo <b>no estás sobre una zona segura</b>, quedas eliminado.</li>
-          <li>Cada zona tiene <b>capacidad limitada</b>: si llegan más jugadores de los que caben, sobrevive quien esté más cerca del centro de la zona.</li>
-          <li>Cada ronda hay <b>tantas zonas seguras como jugadores vivos − 1</b>.</li>
-          <li>Gana el <b>último superviviente</b>.</li>
+          <li>Al empezar, el suelo es <b>neutro</b>: todavía no hay lava.</li>
+          <li>Aparecen las <b>zonas seguras en verde</b> y arranca un contador de <b>5 segundos</b>.</li>
+          <li>Cuando llega a cero, <b>quien no esté sobre una zona segura explota</b>. Quien sí está, se salva.</li>
+          <li>Quedan tantas zonas como <b>jugadores vivos menos uno</b>. Si quedan 4, salen 3 zonas. Y el ciclo se repite.</li>
+          <li>Cada zona es <b>de un solo jugador</b>: si llegas segundo, no cabes.</li>
+          <li>Gana el <b>último que quede de pie</b>.</li>
         </ol>
         <div class="controls-grid">
-          <div><b>Escritorio</b><br />WASD / flechas · mover<br />Espacio · saltar · Shift · correr<br />Ratón · cámara · ESC · pausa</div>
-          <div><b>Móvil</b><br />Joystick izquierdo · mover<br />Botón ▲ · saltar<br />Arrastra a la derecha · cámara</div>
+          <div><b>Ordenador</b><br />WASD o flechas · moverte<br />Espacio · saltar · Shift · correr<br />Ratón · cámara · Esc · pausa</div>
+          <div><b>Móvil</b><br />Joystick izquierdo · moverte<br />Botón ▲ · saltar<br />Arrastra a la derecha · cámara</div>
         </div>
       </section>
     </div>
@@ -205,11 +412,11 @@
 
     <div id="results" class="screen">
       <div class="results-box">
-        <h2 id="results-title">¡VICTORIA!</h2>
+        <h2 id="results-title">¡GANASTE!</h2>
         <p id="results-sub" class="muted"></p>
         <ol id="results-list" class="results-list"></ol>
         <div class="row">
-          <button id="btn-again" class="btn btn-primary">JUGAR DE NUEVO</button>
+          <button id="btn-again" class="btn btn-primary">JUGAR OTRA VEZ</button>
           <button id="btn-menu" class="btn">MENÚ</button>
         </div>
       </div>
@@ -219,7 +426,7 @@
       <section class="panel panel-narrow">
         <h2>PAUSA</h2>
         <div class="row">
-          <button id="btn-resume" class="btn btn-primary">CONTINUAR</button>
+          <button id="btn-resume" class="btn btn-primary">SEGUIR JUGANDO</button>
           <button id="btn-quit" class="btn">SALIR</button>
         </div>
       </section>
