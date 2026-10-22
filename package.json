@@ -1,0 +1,28 @@
+{
+  "name": "the-floor-is-lava",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "THE FLOOR IS LAVA — 3D arena survival game (Three.js + authoritative Node/Socket.IO server)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 4173",
+    "server": "node server/index.js",
+    "start": "node server/index.js",
+    "dev:all": "concurrently -k -n web,server -c cyan,magenta \"vite\" \"node server/index.js\"",
+    "test": "node --test tests/",
+    "test:rules": "node --test tests/rules.test.js",
+    "test:net": "node --test tests/net.test.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.4",
+    "socket.io-client": "^4.8.4"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "vite": "^7.1.0",
+    "three": "^0.186.1"
+  }
+}

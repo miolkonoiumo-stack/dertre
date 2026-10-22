@@ -1,0 +1,234 @@
+﻿<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#0a0506" />
+  <meta name="description" content="THE FLOOR IS LAVA — arena 3D de supervivencia. Cada 5 segundos el suelo cambia." />
+  <title>THE FLOOR IS LAVA — 3D Arena</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="scene"></canvas>
+
+    <div id="loader" class="screen active">
+      <div class="loader-box">
+        <div class="loader-logo">THE FLOOR<span>IS LAVA</span></div>
+        <div class="loader-bar"><i id="loader-fill"></i></div>
+        <div class="loader-text" id="loader-text">Calentando la arena…</div>
+      </div>
+    </div>
+
+    <div id="menu" class="screen">
+      <header class="brand">
+        <h1>THE FLOOR<span>IS LAVA</span></h1>
+        <p class="tagline">Cada 5 segundos el suelo decide quién vive.</p>
+      </header>
+
+      <main class="menu-grid">
+        <section class="panel panel-main">
+          <button id="btn-campaign" class="btn btn-xl">
+            <span class="btn-icon">▶</span>
+            <span><b>JUGAR</b><small>Contra la IA</small></span>
+          </button>
+
+          <div class="row">
+            <button id="btn-quick" class="btn btn-lg">MULTIJUGADOR<small>Partida rápida pública</small></button>
+            <button id="btn-rooms" class="btn btn-lg">SALAS<small>Crear o unirse</small></button>
+          </div>
+
+          <div class="settings-inline">
+            <label class="field">
+              <span>Tu nombre</span>
+              <input id="player-name" maxlength="14" placeholder="PILOT" autocomplete="nickname" />
+            </label>
+            <div class="field field-grow">
+              <span>Dificultad IA</span>
+              <div id="difficulty-picker" class="diff-picker" role="radiogroup" aria-label="Dificultad de la IA">
+                <button type="button" class="diff-opt" data-diff="tutorial" role="radio" aria-checked="false">Tutorial</button>
+                <button type="button" class="diff-opt" data-diff="beginner" role="radio" aria-checked="false">Principiante</button>
+                <button type="button" class="diff-opt is-on" data-diff="intermediate" role="radio" aria-checked="true">Intermedio</button>
+                <button type="button" class="diff-opt" data-diff="advanced" role="radio" aria-checked="false">Avanzado</button>
+                <button type="button" class="diff-opt" data-diff="expert" role="radio" aria-checked="false">Experto</button>
+              </div>
+              <select id="difficulty" class="sr-only" tabindex="-1" aria-hidden="true">
+                <option value="tutorial">Tutorial</option>
+                <option value="beginner">Principiante</option>
+                <option value="intermediate" selected>Intermedio</option>
+                <option value="advanced">Avanzado</option>
+                <option value="expert">Experto</option>
+              </select>
+            </div>
+            <label class="field">
+              <span>Rivales IA</span>
+              <input id="bot-count" type="range" min="1" max="7" value="5" />
+              <output id="bot-count-out">5</output>
+            </label>
+          </div>
+
+          <div class="row row-small">
+            <button id="btn-settings" class="btn btn-ghost">⚙ Ajustes</button>
+            <button id="btn-howto" class="btn btn-ghost">? Cómo jugar</button>
+          </div>
+        </section>
+
+        <aside class="panel panel-side">
+          <h3>PERSONAJE</h3>
+          <div class="skin-preview"><canvas id="skin-canvas" width="220" height="220"></canvas></div>
+          <div id="color-picker" class="swatches"></div>
+          <div class="server-status">
+            <i id="conn-dot" class="dot"></i>
+            <span id="conn-text">Servidor: comprobando…</span>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <div id="rooms" class="screen">
+      <header class="subhead">
+        <button class="btn btn-ghost back" data-back>← VOLVER</button>
+        <h2>SALAS</h2>
+      </header>
+      <div class="menu-grid">
+        <section class="panel">
+          <h3>CREAR SALA</h3>
+          <label class="field"><span>Nombre</span><input id="room-name" maxlength="24" placeholder="Arena privada" /></label>
+          <label class="check"><input id="room-private" type="checkbox" /> Sala privada (solo por código)</label>
+          <button id="btn-create" class="btn btn-lg">CREAR</button>
+          <hr />
+          <h3>UNIRSE POR CÓDIGO</h3>
+          <div class="row">
+            <input id="join-code" class="code-input" maxlength="5" placeholder="ABC12" autocapitalize="characters" />
+            <button id="btn-join" class="btn">ENTRAR</button>
+          </div>
+        </section>
+        <section class="panel">
+          <h3>SALAS PÚBLICAS <button id="btn-refresh" class="btn btn-mini">⟳</button></h3>
+          <ul id="room-list" class="room-list"><li class="muted">Cargando…</li></ul>
+        </section>
+      </div>
+    </div>
+
+    <div id="lobby" class="screen">
+      <header class="subhead">
+        <button class="btn btn-ghost back" id="btn-leave">← SALIR</button>
+        <h2>SALA <span id="lobby-code" class="code-badge">-----</span></h2>
+      </header>
+      <div class="menu-grid">
+        <section class="panel">
+          <ul id="lobby-players" class="player-list"></ul>
+          <div class="row">
+            <button id="btn-ready" class="btn">ESTOY LISTO</button>
+            <button id="btn-start" class="btn btn-primary" hidden>INICIAR PARTIDA</button>
+          </div>
+          <p class="hint" id="lobby-hint">Comparte el código para que entren tus amigos.</p>
+        </section>
+        <section class="panel">
+          <h3>CHAT</h3>
+          <div id="chat-log" class="chat-log"></div>
+          <form id="chat-form" class="row">
+            <input id="chat-input" maxlength="140" placeholder="Mensaje…" />
+            <button class="btn" type="submit">➤</button>
+          </form>
+        </section>
+      </div>
+    </div>
+
+    <div id="settings" class="screen">
+      <header class="subhead"><button class="btn btn-ghost back" data-back>← VOLVER</button><h2>AJUSTES</h2></header>
+      <section class="panel panel-narrow">
+        <label class="field"><span>Volumen general</span><input id="vol-master" type="range" min="0" max="100" value="80" /></label>
+        <label class="field"><span>Música</span><input id="vol-music" type="range" min="0" max="100" value="55" /></label>
+        <label class="field"><span>Efectos</span><input id="vol-sfx" type="range" min="0" max="100" value="85" /></label>
+        <label class="field"><span>Calidad gráfica</span>
+          <select id="quality"><option value="low">Baja</option><option value="medium">Media</option><option value="high" selected>Alta</option></select>
+        </label>
+        <label class="check"><input id="opt-bloom" type="checkbox" checked /> Bloom / postprocesado</label>
+        <label class="check"><input id="opt-shadows" type="checkbox" checked /> Sombras</label>
+        <label class="check"><input id="opt-particles" type="checkbox" checked /> Partículas volumétricas</label>
+        <label class="check"><input id="opt-invert" type="checkbox" /> Invertir cámara Y</label>
+        <label class="field"><span>Sensibilidad de cámara</span><input id="cam-sens" type="range" min="20" max="200" value="90" /></label>
+      </section>
+    </div>
+
+    <div id="howto" class="screen">
+      <header class="subhead"><button class="btn btn-ghost back" data-back>← VOLVER</button><h2>CÓMO JUGAR</h2></header>
+      <section class="panel panel-narrow howto">
+        <ol>
+          <li><b>Corre por las plataformas verdes.</b> El resto es lava.</li>
+          <li><b>Cada 5 segundos</b> el suelo cambia: aparecen nuevas zonas seguras.</li>
+          <li>Si al cambiar el suelo <b>no estás sobre una zona segura</b>, quedas eliminado.</li>
+          <li>Cada zona tiene <b>capacidad limitada</b>: si llegan más jugadores de los que caben, sobrevive quien esté más cerca del centro de la zona.</li>
+          <li>Cada ronda hay <b>tantas zonas seguras como jugadores vivos − 1</b>.</li>
+          <li>Gana el <b>último superviviente</b>.</li>
+        </ol>
+        <div class="controls-grid">
+          <div><b>Escritorio</b><br />WASD / flechas · mover<br />Espacio · saltar · Shift · correr<br />Ratón · cámara · ESC · pausa</div>
+          <div><b>Móvil</b><br />Joystick izquierdo · mover<br />Botón ▲ · saltar<br />Arrastra a la derecha · cámara</div>
+        </div>
+      </section>
+    </div>
+
+    <div id="hud" class="hud" hidden>
+      <div class="hud-top">
+        <div class="timer-wrap">
+          <svg viewBox="0 0 120 120" class="timer-ring">
+            <circle cx="60" cy="60" r="52" class="ring-bg" />
+            <circle cx="60" cy="60" r="52" class="ring-fg" id="ring-fg" />
+          </svg>
+          <div class="timer-num" id="timer-num">5</div>
+          <div class="round-tag">RONDA <b id="hud-round">1</b></div>
+        </div>
+        <div class="alive-wrap">
+          <div class="alive-num" id="hud-alive">8</div>
+          <div class="alive-label">VIVOS</div>
+        </div>
+        <button id="btn-pause" class="btn btn-mini hud-pause">II</button>
+      </div>
+      <div id="killfeed" class="killfeed"></div>
+      <div id="center-msg" class="center-msg"></div>
+      <div id="spectator-badge" class="spectator" hidden>ELIMINADO · MODO ESPECTADOR</div>
+
+      <div class="touch-controls" id="touch-controls">
+        <div id="joy" class="joy"><div id="joy-knob" class="joy-knob"></div></div>
+        <div id="btn-jump-touch" class="touch-btn jump">▲</div>
+        <div id="cam-zone" class="cam-zone"></div>
+      </div>
+
+      <div class="hud-players" id="hud-players"></div>
+    </div>
+
+    <div id="countdown" class="countdown" hidden><span id="countdown-num">3</span></div>
+
+    <div id="results" class="screen">
+      <div class="results-box">
+        <h2 id="results-title">¡VICTORIA!</h2>
+        <p id="results-sub" class="muted"></p>
+        <ol id="results-list" class="results-list"></ol>
+        <div class="row">
+          <button id="btn-again" class="btn btn-primary">JUGAR DE NUEVO</button>
+          <button id="btn-menu" class="btn">MENÚ</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="pause" class="screen">
+      <section class="panel panel-narrow">
+        <h2>PAUSA</h2>
+        <div class="row">
+          <button id="btn-resume" class="btn btn-primary">CONTINUAR</button>
+          <button id="btn-quit" class="btn">SALIR</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+    <div id="rotate-hint" hidden>Gira el dispositivo para una mejor experiencia</div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

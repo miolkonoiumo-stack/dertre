@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.vite/
+
+# Logs
+*.log
+*.err.log
+server.*.log
+vite.*.log
+
+# Local scratch / probe artifacts
+.probe.txt
+tools/*.png
+tools/*.json
+!tools/README.md
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Env
+.env
+.env.*
+!.env.example
