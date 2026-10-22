@@ -58,6 +58,8 @@ export class UI {
     act('btn-quit', 'quit');
     act('btn-again', 'again');
     act('btn-menu', 'menu');
+    act('btn-spectate', 'spectate');
+    act('btn-death-menu', 'menu');
     act('btn-jump-touch', 'jump-touch');
     $$('[data-back]').forEach((b) => b.addEventListener('click', () => this.show('menu')));
 
@@ -213,6 +215,22 @@ export class UI {
 
   spectator(on) { const el = $('#spectator-badge'); if (el) el.hidden = !on; }
 
+  /**
+   * Panel al morir: deja elegir entre seguir mirando o salir al menú.
+   * `options` permite cambiar el texto según el modo (solo hay revancha
+   * inmediata contra la IA; online se vuelve al lobby).
+   */
+  deathPanel(on, options = {}) {
+    const el = $('#death-panel');
+    if (!el) return;
+    el.hidden = !on;
+    if (!on) return;
+    const sub = $('#death-sub');
+    if (sub && options.text) sub.textContent = options.text;
+    const keep = $('#btn-spectate');
+    if (keep && options.keepLabel) keep.textContent = options.keepLabel;
+  }
+
   setTouch(on) { $('#touch-controls')?.classList.toggle('on', on); }
 
   // ── Results ───────────────────────────────────────────────────────────────
@@ -235,7 +253,13 @@ export class UI {
         <span style="margin-left:auto;color:var(--ink-dim);font-size:12px">${s.roundsSurvived} rondas</span>`;
       ol.appendChild(li);
     });
-    $('#btn-again').hidden = isBot === false;
+    // Sin revancha de un clic en online: allí se vuelve al lobby, así que el
+    // botón lleva a él en vez de prometer una partida que no puede empezar.
+    const again = $('#btn-again');
+    if (again) {
+      again.hidden = false;
+      again.textContent = isBot === false ? 'VOLVER AL LOBBY' : 'VOLVER A JUGAR';
+    }
   }
 
   setConn(on, text) {

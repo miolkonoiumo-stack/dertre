@@ -399,6 +399,23 @@
       <div id="center-msg" class="center-msg"></div>
       <div id="spectator-badge" class="spectator" hidden>ELIMINADO · MODO ESPECTADOR</div>
 
+      <!--
+        Al morir, la partida sigue. Este panel deja elegir entre seguir mirando
+        como espectador o salir ya. Sin él, el jugador eliminado se quedaba
+        encerrado mirando a los demás hasta que terminaba la partida.
+      -->
+      <div id="death-panel" class="death-panel" hidden>
+        <div class="death-card">
+          <div class="death-emoji" aria-hidden="true">💥</div>
+          <h3>TE QUEMASTE</h3>
+          <p id="death-sub">Sigues en la partida como espectador.</p>
+          <div class="row">
+            <button id="btn-spectate" class="btn btn-primary">SEGUIR MIRANDO</button>
+            <button id="btn-death-menu" class="btn">MENÚ</button>
+          </div>
+        </div>
+      </div>
+
       <div class="touch-controls" id="touch-controls">
         <div id="joy" class="joy"><div id="joy-knob" class="joy-knob"></div></div>
         <div id="btn-jump-touch" class="touch-btn jump">▲</div>
@@ -416,7 +433,7 @@
         <p id="results-sub" class="muted"></p>
         <ol id="results-list" class="results-list"></ol>
         <div class="row">
-          <button id="btn-again" class="btn btn-primary">JUGAR OTRA VEZ</button>
+          <button id="btn-again" class="btn btn-primary">VOLVER A JUGAR</button>
           <button id="btn-menu" class="btn">MENÚ</button>
         </div>
       </div>

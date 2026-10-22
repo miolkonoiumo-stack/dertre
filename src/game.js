@@ -281,6 +281,7 @@ export class GameApp {
       case 'quit': return this.quitMatch();
       case 'again': return this.playAgain();
       case 'menu': return this.toMenu();
+      case 'spectate': return this.ui.deathPanel(false);
       case 'chat': return this.net?.chat(String(value || ''));
       case 'color': this._drawSkinPreview(); return;
       case 'volume':
@@ -326,6 +327,7 @@ export class GameApp {
     this.ui.hudVisible(true);
     this.ui.setTouch(this.input.isTouch);
     this.ui.spectator(false);
+    this.ui.deathPanel(false);
     this._syncPlayers(session.state);
     this.lastRound = 0;
     session.start();
@@ -345,6 +347,7 @@ export class GameApp {
       this.ui.show('game');
       this.ui.hudVisible(true);
       this.ui.spectator(false);
+      this.ui.deathPanel(false);
       this._syncPlayers(this.session.state);
       if (!this.input.isTouch) setTimeout(() => this.input.requestPointerLock(this.canvas), 200);
     } else if (this.mode === 'online') {
@@ -582,6 +585,15 @@ export class GameApp {
       this.spectating = true;
       this.ui.message('ELIMINADO', '#ff3550', 1400);
       this.ui.spectator(true);
+      // El espectador es opcional: la partida sigue, pero el jugador decide si
+      // quiere mirarla o salir ya. Sin esto quedaba atrapado mirando hasta el
+      // final de la partida.
+      this.ui.deathPanel(true, {
+        text: this.mode === 'solo'
+          ? 'La partida sigue. Puedes mirar hasta que haya un ganador.'
+          : 'La partida sigue. Puedes mirar o salir de la sala.',
+        keepLabel: 'SEGUIR MIRANDO',
+      });
       this.audio.defeat();
       this.input.exitPointerLock();
     }
@@ -613,6 +625,7 @@ export class GameApp {
     this.matchOver = true;
     this.ui.hudVisible(false);
     this.ui.spectator(false);
+    this.ui.deathPanel(false);
     this.ui.showResults({ standings, winner, myId, isBot: this.mode === 'solo' });
     if (winner === myId) { this.audio.victory(); this.ui.message('Â¡GANASTE!', '#6dff3d', 1800); }
     else this.audio.defeat();
@@ -1010,6 +1023,7 @@ export class GameApp {
   }
 
   quitMatch() {
+    this.ui?.deathPanel(false);
     if (this.mode === 'online') this.net?.leave();
     this._teardownSession();
     this.mode = null;
@@ -1025,6 +1039,7 @@ export class GameApp {
   }
 
   toMenu() {
+    this.ui?.deathPanel(false);
     this.quitMatch();
     this.audio.duckMusic(false);
   }
